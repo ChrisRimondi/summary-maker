@@ -8,3 +8,4 @@ python-dotenv
 pocketsphinx
 youtube_dl
 pytest
+cyclonedx-bom
