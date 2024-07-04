@@ -28,7 +28,7 @@ def refresh_podcast(feed_url):
     feed = feedparser.parse(feed_url)
     return feed.entries[:10]
 
-# Save summary of content
+# Save summary of content as a dict to a JSON file
 def save_content(content_record):
     """
     Appends the given data to saved content JSON file.
