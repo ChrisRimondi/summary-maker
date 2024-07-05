@@ -8,28 +8,29 @@ from transcribe import transcribe_audio_locally
 from summarize import summarize_transcription, summarize_article
 from utils import download_episode, convert_mp3_to_wav
 from rss_utils import get_seroter_daily_entries, expand_entry
+from typing import Dict, List, Any
 
 # Load feeds from file
-def load_feeds():
+def load_feeds() -> Dict[str, List[str]]:
     if not os.path.exists('data/feeds.json'):
         return {"podcasts": [], "youtube_channels": []}
     with open('data/feeds.json', 'r') as f:
         return json.load(f)
 
 # Save feeds to file
-def save_feeds(feeds):
+def save_feeds(feeds: Dict[str, List[str]]) -> None:
     with open('data/feeds.json', 'w') as f:
         json.dump(feeds, f)
 
 feeds = load_feeds()
 
 # Refresh podcast feeds
-def refresh_podcast(feed_url):
+def refresh_podcast(feed_url: str) -> List[feedparser.FeedParserDict]:
     feed = feedparser.parse(feed_url)
     return feed.entries[:10]
 
 # Save summary of content as a dict to a JSON file
-def save_content(content_record):
+def save_content(content_record: Dict[str, Any]) -> None:
     """
     Appends the given data to saved content JSON file.
 
@@ -48,7 +49,7 @@ def save_content(content_record):
                 print(existing_data)
             except json.JSONDecodeError:
                 existing_data = {}
-                print("JSO decoding Error")
+                print("JSON decoding Error")
     else:
         existing_data = {}
         print("saved_content.json does not exist")
@@ -66,7 +67,7 @@ def save_content(content_record):
         print(existing_data)
 
 # Generate a transcript
-def generate_transcript(url):
+def generate_transcript(url: str) -> str:
     # Implement transcription logic here
     episode_id = hashlib.sha256(url.encode()).hexdigest()[:6]
     mp3_path = f"data/podcasts/episode_{episode_id}.mp3"
