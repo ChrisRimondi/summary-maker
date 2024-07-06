@@ -21,7 +21,7 @@ def extract_strong_tags_with_href(html_string):
 # Refresh rss feeds
 def refresh_rss(feed_url):
     feed = feedparser.parse(feed_url)
-    return feed.entries[:20]
+    return feed.entries[:10]
 
 def get_seroter_daily_entries():
     feed_url = 'https://seroter.wordpress.com/feed'

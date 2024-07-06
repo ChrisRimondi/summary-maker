@@ -92,8 +92,9 @@ target/
 .ipynb_checkpoints
 
 # Other files
-feeds.json]
+feeds.json
 .vscode/
+saved_content.csv
 
 # IPython
 profile_default/

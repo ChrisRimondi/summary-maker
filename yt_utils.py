@@ -57,8 +57,8 @@ def download_audio(video_url):
         return False
 
 def main(channel_url):
-    # Get the 5 most recent videos from the channel
-    video_urls = get_recent_videos_from_channel(channel_url, max_videos=5)
+    # Get the 10 most recent videos from the channel
+    video_urls = get_recent_videos_from_channel(channel_url, max_videos=10)
     
     if not video_urls:
         print("No videos found or error extracting videos from channel.")

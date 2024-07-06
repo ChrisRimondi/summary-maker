@@ -9,16 +9,17 @@ from summarize import summarize_transcription, summarize_article
 from utils import download_episode, convert_mp3_to_wav
 from rss_utils import get_seroter_daily_entries, expand_entry
 from typing import Dict, List, Any
+import csv
 
 # Load feeds from file
-def load_feeds() -> Dict[str, List[str]]:
+def load_feeds() -> Dict[str, List[Dict[str, str]]]:
     if not os.path.exists('data/feeds.json'):
         return {"podcasts": [], "youtube_channels": []}
     with open('data/feeds.json', 'r') as f:
         return json.load(f)
 
 # Save feeds to file
-def save_feeds(feeds: Dict[str, List[str]]) -> None:
+def save_feeds(feeds: Dict[str, List[Dict[str, str]]]) -> None:
     with open('data/feeds.json', 'w') as f:
         json.dump(feeds, f)
 
@@ -32,39 +33,23 @@ def refresh_podcast(feed_url: str) -> List[feedparser.FeedParserDict]:
 # Save summary of content as a dict to a JSON file
 def save_content(content_record: Dict[str, Any]) -> None:
     """
-    Appends the given data to saved content JSON file.
+    Saves a dictionary to a CSV file, mapping keys to column names.
+    If the CSV file already exists, it appends to the next free row.
 
     Args:
-    content_record (dict): The new data to append to the file.
+        file_path (str): The path to the CSV file.
+        data (Dict[str, Any]): The dictionary to save to the CSV file.
     """
-    file_path = "data/saved_content.json"
-    # Check if the file exists
-    if os.path.exists(file_path):
-        # Read the existing data
-        print("Opening saved_content.json")
-        with open(file_path, 'r') as json_file:
-            try:
-                existing_data = json.load(json_file)
-                print("Loaded existing data")
-                print(existing_data)
-            except json.JSONDecodeError:
-                existing_data = {}
-                print("JSON decoding Error")
-    else:
-        existing_data = {}
-        print("saved_content.json does not exist")
+    file_path = "data/saved_content.csv"
+    file_exists = os.path.isfile(file_path)
 
-    # Update the existing data with the new data
-    if isinstance(existing_data, dict) and isinstance(content_record, dict):
-        existing_data.update(content_record)
-    else:
-        raise ValueError("Both existing and new data must be dictionaries")
-
-    # Write the updated data back to the file
-    with open(file_path, 'w') as json_file:
-        json.dump(existing_data, json_file, indent=4)
-        print("Summary saved to saved_content.json")
-        print(existing_data)
+    with open(file_path, 'a', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=content_record.keys())
+        
+        if not file_exists:
+            writer.writeheader()  # File does not exist, write the header
+        
+        writer.writerow(content_record)
 
 # Generate a transcript
 def generate_transcript(url: str) -> str:
@@ -79,14 +64,16 @@ def generate_transcript(url: str) -> str:
 
 st.title("Content Summarizer")
 
+
 # Selector for viewing Podcasts or YouTube videos
 view_option = st.radio("Choose content type to view:", ("Podcasts", "YouTube Videos", "Seroter"))
 
 if view_option == "Podcasts":
     # Podcast dropdown
-    podcast_feed = st.selectbox("Select Podcast Feed", options=feeds["podcasts"])
+    podcast_feed = st.selectbox("Select Podcast Feed", options=[f"{podcast['short_name']} ({podcast['url']})" for podcast in feeds["podcasts"]])
     if podcast_feed:
-        podcast_entries = refresh_podcast(podcast_feed)
+        feed_url = podcast_feed.split(" (")[-1][:-1]  # Extract URL from selected option
+        podcast_entries = refresh_podcast(feed_url)
         for entry in podcast_entries:
             st.write(entry.title)
             download_url = entry.enclosures[0]['href']
@@ -109,11 +96,11 @@ if view_option == "Podcasts":
                 
 elif view_option == "YouTube Videos":
     # Youtube dropdown
-    youtube_channel = st.selectbox("Select YouTube Channel", options=feeds["youtube_channels"])
+    youtube_channel = st.selectbox("Select YouTube Channel", options=[f"{channel['short_name']} ({channel['url']})" for channel in feeds["youtube_channels"]])
     if youtube_channel:
-        youtube_entries = get_recent_videos_from_channel(youtube_channel)
+        channel_url = youtube_channel.split(" (")[-1][:-1]  # Extract URL from selected option
+        youtube_entries = get_recent_videos_from_channel(channel_url)
         for entry in youtube_entries:
-            #st.write(entry['title'])
             download_url = entry['link']
             file_name = "data/yt_audio/" + hashlib.sha256(download_url.encode()).hexdigest()[:6] + ".txt"
             if os.path.exists(file_name):

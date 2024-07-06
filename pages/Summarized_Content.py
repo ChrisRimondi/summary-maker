@@ -1,23 +1,48 @@
 import streamlit as st
-import json
 import os
+from typing import Any, Dict, List
+import csv
 
-# Load saved content from file
-def load_content():
-    if not os.path.exists('data/saved_content.json'):
-        return {}
-    with open('data/saved_content.json', 'r') as f:
-        return json.load(f)
+def read_csv_to_dict(file_path: str) -> List[Dict[str, Any]]:
+    """
+    Reads a CSV file and returns its contents as a list of dictionaries.
+
+    Args:
+        file_path (str): The path to the CSV file.
+
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries representing the rows in the CSV file.
+    """
+    data = []
+    with open(file_path, 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            data.append(dict(row))
+    return data
+
 
 st.title("Summarized Content")
 # Selector for Content
 view_option = st.radio("Choose content type to view:", ("Podcasts", "YouTube Videos", "Seroter"))
+content = read_csv_to_dict("data/saved_contet.csv")
 
 if view_option == "Podcasts":
-    st.header("Podcast Content")
-    for entry in load_content():
-        st.write(entry)
+    header = "Podcast Content"
+    content_option = "podcast"
 elif view_option == "YouTube Videos":
-    st.header("Youtube Content")
+    header = "Youtube Content"
+    content_option = "youtube"
 elif view_option == "Seroter":
-    st.header("Seroter Links")
+    header = "Seroter Content"
+    content_option = "seroter"
+
+
+for content_record in content:
+    if content_record['type'] == content_option:
+        file_name = content_record['file_location']
+        if os.path.exists(file_name):
+            with open(file_name, "r") as file:
+                summary = file.read()
+                st.write(content_record['feed'])
+                with st.expander("Show Summary for: " + content_record['title']):
+                    st.markdown(summary.replace('\\n', '\n'))
